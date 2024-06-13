@@ -1,19 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useCallback, useMemo, useReducer } from "react";
 import Filter from "src/components/Filter";
 import UsageCostChart from "src/components/UsageCostChart";
-import { Cost } from "src/interfaces/Cost";
-import { Usage } from "src/interfaces/Usage";
 import { readData } from "src/services/dataService";
+import { initialState, reducer } from "src/services/reducerService";
 
 export default function Index() {
-  const [usages, setUsages] = useState<Usage[]>([]);
-  const [costs, setCosts] = useState<Cost[]>([]);
-  const [typeUsage, setTypeUsage] = useState('');
-  const [model, setModel] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { usages, costs, typeUsage, model, loading, error} = state;
 
   const uniqueTypes = useMemo(() => Array.from(new Set(usages.map(usage => usage.type))), [usages]);
   const uniqueModels = useMemo(() => Array.from(new Set(usages.map(usage => usage.model))), [usages]);
@@ -25,14 +20,12 @@ export default function Index() {
   }, [usages, typeUsage, model]);
 
   const fetchData = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: true });
     try {
       const { usages, costs } = await readData();
-      setUsages(usages);
-      setCosts(costs);
-      setLoading(false);
+      dispatch({ type: 'SET_DATA', payload: { usages, costs } });
     } catch (err) {
-      setError("Failed to load data");
-      setLoading(false);
+      dispatch({ type: 'SET_ERROR', payload: "Failed to load data" });
     }
   }, []);
 
@@ -55,8 +48,8 @@ export default function Index() {
         models={uniqueModels} 
         selectedType={typeUsage} 
         selectedModel={model} 
-        onTypeChange={setTypeUsage} 
-        onModelChange={setModel} 
+        onTypeChange={(type) => dispatch({ type: 'SET_TYPE_USAGE', payload: type })} 
+        onModelChange={(model) => dispatch({ type: 'SET_MODEL', payload: model })} 
       />
       <UsageCostChart usages={filteredUsages} costs={costs} />
     </div>
