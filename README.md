@@ -31,6 +31,7 @@ To start the development server:
 
 ```bash
 npm run dev
+```
 
 ###The application will be running at http://localhost:3000 (or a different port if specified).
 
